@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ShramSathi - Your Work Companion
+
+ShramSathi is a digital platform designed specifically for daily wage workers and contractors in India. It helps workers track their attendance and payments while allowing contractors to manage and monitor their workforce.
+
+## Features
+
+### For Workers:
+- ✅ Simple mobile number + OTP authentication
+- ✅ Interactive calendar to mark daily attendance
+- ✅ Support for multiple attendance types (A, 1/2P, P, P1/2, 2P)
+- ✅ Payment tracking for each day
+- ✅ Monthly statistics and earnings overview
+- ✅ Connect to contractors using contractor codes
+
+### For Contractors:
+- ✅ Manage multiple workers
+- ✅ View worker attendance calendars (read-only)
+- ✅ Track worker payments and performance
+- ✅ Generate and share contractor codes
+- ✅ Monthly statistics for each worker
+
+## Technology Stack
+
+- **Frontend**: Next.js 14 with TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: Firebase Firestore
+- **Icons**: Lucide React
+- **Date Handling**: date-fns
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ installed
+- npm or yarn package manager
 
+### Installation
+
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Set up Firebase:
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create a new project
+   - Enable Firestore Database
+   - Get your Firebase configuration
+   - Update `src/lib/firebase.ts` with your actual Firebase config:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```typescript
+const firebaseConfig = {
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Start the development server:
+```bash
+npm run dev
+```
 
-## Learn More
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+## Usage
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Demo Authentication
+The app uses mock OTP for demo purposes:
+- Use any 10-digit mobile number
+- Enter OTP: `123456`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Worker Flow:
+1. Sign up with mobile number and OTP
+2. Select "Worker" role
+3. Complete profile (name, skill)
+4. Mark daily attendance on calendar
+5. Add payment amounts (optional)
+6. Connect to contractor using contractor code
 
-## Deploy on Vercel
+### Contractor Flow:
+1. Sign up with mobile number and OTP
+2. Select "Contractor" role  
+3. Complete profile (name, company)
+4. Share your contractor code with workers
+5. View worker attendance and payments
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/                 # Next.js 13+ app directory
+├── components/          # React components
+│   ├── auth/           # Authentication components
+│   ├── worker/         # Worker dashboard components  
+│   └── contractor/     # Contractor dashboard components
+├── contexts/           # React contexts (Auth)
+├── lib/               # Utility functions and configs
+│   ├── firebase.ts    # Firebase configuration
+│   └── database.ts    # Database operations
+└── types/             # TypeScript type definitions
+```
+
+## Database Structure
+
+### Collections:
+- `users` - User profiles (workers and contractors)
+- `attendance` - Daily attendance records
+- `contractor_worker_relations` - Worker-contractor assignments
+
+### Key Features:
+- Real-time updates using Firestore
+- Automatic contractor code generation
+- Attendance history tracking
+- Payment record management
+
+## Future Enhancements
+
+- [ ] Multi-language support (Hindi, regional languages)
+- [ ] SMS/WhatsApp notifications
+- [ ] Offline support
+- [ ] Payment integration
+- [ ] Advanced reporting and analytics
+- [ ] Mobile app (React Native)
+- [ ] Geolocation-based attendance
+
+---
+
+**ShramSathi** - Empowering daily wage workers and contractors with digital tools.

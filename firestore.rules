@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // TEMPORARY RULES FOR MVP TESTING - REMOVE IN PRODUCTION!
+    // Allow all read/write operations for MVP testing without authentication
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // TODO: Replace with proper authentication-based rules once Firebase Auth is implemented
+    // 
+    // // Users collection - users can read/write their own data
+    // match /users/{userId} {
+    //   allow read, write: if request.auth != null;
+    //   // Allow reading by mobile number for login purposes
+    //   allow read: if resource.data.mobile != null;
+    // }
+    // 
+    // // Attendance records - users can manage their own attendance
+    // match /attendance/{attendanceId} {
+    //   allow read, write: if request.auth != null;
+    //   // Allow contractors to read their workers' attendance
+    //   allow read: if request.auth != null && 
+    //     exists(/databases/$(database)/documents/contractor_worker_relations/$(resource.data.contractorId + '_' + resource.data.userId));
+    // }
+    // 
+    // // Contractor-Worker relationships
+    // match /contractor_worker_relations/{relationId} {
+    //   allow read, write: if request.auth != null;
+    //   // Allow contractors to manage their worker relationships
+    //   allow read, write: if request.auth != null && 
+    //     (resource.data.contractorId == request.auth.uid || resource.data.workerId == request.auth.uid);
+    // }
+  }
+}
