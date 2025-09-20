@@ -15,7 +15,7 @@ import {
   disableNetwork
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { User, AttendanceRecord, ContractorWorkerRelation } from '@/types';
+import { User, AttendanceRecord, ContractorWorkerRelation, AttendanceType } from '@/types';
 
 // Offline sync queue
 let syncQueue: any[] = [];
@@ -677,7 +677,7 @@ const getWorkersByContractorLocal = async (contractorId: string): Promise<User[]
 export const saveAttendance = async (
   userId: string,
   date: string,
-  attendanceType: string,
+  attendanceType: AttendanceType,
   paymentAmount?: number
 ): Promise<{success: boolean, error?: string, data?: AttendanceRecord}> => {
   try {
@@ -779,7 +779,7 @@ export const saveAttendance = async (
 const saveAttendanceLocal = async (
   userId: string,
   date: string,
-  attendanceType: string,
+  attendanceType: AttendanceType,
   paymentAmount?: number
 ): Promise<{success: boolean, error?: string, data?: AttendanceRecord}> => {
   try {

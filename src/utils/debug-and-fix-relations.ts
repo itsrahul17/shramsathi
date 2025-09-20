@@ -3,7 +3,7 @@ export const debugAndFixRelations = () => {
   console.log('🔍 ADVANCED DEBUG: Contractor-Worker Relations');
   
   // Get all localStorage keys
-  const allKeys = [];
+  const allKeys: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith('shramsathi_temp_')) {
@@ -13,9 +13,9 @@ export const debugAndFixRelations = () => {
   
   // Find all users
   const userKeys = allKeys.filter(key => key.includes('user_'));
-  const users = [];
-  let currentContractor = null;
-  let currentWorker = null;
+  const users: any[] = [];
+  let currentContractor: any = null;
+  let currentWorker: any = null;
   
   userKeys.forEach(key => {
     const data = localStorage.getItem(key);
@@ -104,7 +104,7 @@ export const recreateRelations = () => {
   console.log('🧹 Cleaning and recreating relations...');
   
   // Remove all existing relations
-  const allKeys = [];
+  const allKeys: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.includes('relation_')) {
@@ -118,7 +118,7 @@ export const recreateRelations = () => {
   });
   
   // Recreate relations based on worker contractor codes
-  const userKeys = [];
+  const userKeys: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith('shramsathi_temp_user_')) {
@@ -126,7 +126,7 @@ export const recreateRelations = () => {
     }
   }
   
-  const users = [];
+  const users: any[] = [];
   userKeys.forEach(key => {
     const data = localStorage.getItem(key);
     if (data) {

@@ -125,7 +125,7 @@ export const debugFirebase = {
       const result = await saveAttendance(
         attendanceData.userId,
         attendanceData.date,
-        attendanceData.attendanceType,
+        attendanceData.attendanceType as 'P',
         attendanceData.paymentAmount
       );
 

@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User, AttendanceRecord } from '@/types';
 import { getWorkersByContractor, getAttendanceByUser, ensureContractorCode } from '@/lib/database';
 import { calculateMonthlyDihaadiStats } from '@/utils/dihaadi-utils';
+import { trackDashboardView, trackWorkerAssignment } from '@/lib/analytics';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
 import '@/utils/fix-contractor-sync'; // Load contractor sync fix utility
 import '@/utils/debug-and-fix-relations'; // Load advanced debug utilities
@@ -31,6 +32,10 @@ export default function ContractorDashboard() {
   const [view, setView] = useState<'workers' | 'calendar' | 'payments'>('workers');
 
   useEffect(() => {
+    if (user && user.role === 'contractor') {
+      // Track dashboard view
+      trackDashboardView('contractor', user.id);
+    }
     initializeContractor();
   }, [user]);
 

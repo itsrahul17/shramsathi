@@ -5,6 +5,7 @@ import { Phone, ArrowRight, User, Building } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserByMobile, createUser } from '@/lib/database';
 import { UserRole } from '@/types';
+import { trackUserRegistration, trackUserLogin } from '@/lib/analytics';
 
 interface AuthPageProps {
   onSuccess: () => void;
@@ -74,6 +75,8 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
     try {
       const user = await getUserByMobile(mobile);
       if (user) {
+        // Track user login
+        trackUserLogin(user.role, user.id);
         setUser(user);
         onSuccess();
       } else {
@@ -129,6 +132,10 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
       
       const newUser = { ...userData, id: userId, createdAt: new Date() };
       console.log('Setting user and calling onSuccess with:', newUser);
+      
+      // Track user registration
+      trackUserRegistration(selectedRole!, userId);
+      
       setUser(newUser);
       onSuccess();
     } catch (error) {

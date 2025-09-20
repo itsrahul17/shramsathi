@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { AttendanceRecord, AttendanceType } from '@/types';
 import { saveAttendance, getAttendanceByUser, assignWorkerToContractor, testFirebaseConnection } from '@/lib/database';
+import { trackDashboardView, trackAttendanceMarked, trackContractorConnection, trackPaymentHistory } from '@/lib/analytics';
 import { calculateMonthlyDihaadiStats, getAttendanceDescription } from '@/utils/dihaadi-utils';
 import '@/utils/debug-firebase'; // Load debug utilities
 import '@/utils/debug-contractor-connection'; // Load contractor debug utilities
@@ -45,6 +46,11 @@ export default function WorkerDashboard() {
   ];
 
   useEffect(() => {
+    if (user) {
+      // Track dashboard view
+      trackDashboardView('worker', user.id);
+    }
+    
     loadAttendanceRecords();
     // Test Firebase connection on load
     testFirebaseConnection().then((result) => {
@@ -100,6 +106,9 @@ export default function WorkerDashboard() {
     try {
       const result = await saveAttendance(user.id, dateStr, selectedAttendance, amount);
       if (result.success) {
+        // Track attendance marking
+        trackAttendanceMarked(user.id, selectedAttendance, amount);
+        
         setMessage('Attendance saved successfully!' + (result.error ? ' (' + result.error + ')' : ''));
         await loadAttendanceRecords();
         setShowAttendanceModal(false);
@@ -123,6 +132,9 @@ export default function WorkerDashboard() {
     try {
       const success = await assignWorkerToContractor(user.id, contractorCode.trim().toUpperCase());
       if (success) {
+        // Track contractor connection
+        trackContractorConnection(user.id, contractorCode.trim().toUpperCase());
+        
         // Update user context with contractor code
         const updatedUser = { ...user, contractorCode: contractorCode.trim().toUpperCase() };
         setUser(updatedUser);
@@ -338,7 +350,12 @@ export default function WorkerDashboard() {
             {user.contractorCode ? 'Change Contractor' : 'Connect to Contractor'}
           </button>
           <button
-            onClick={() => setShowPaymentHistoryModal(true)}
+            onClick={() => {
+              const totalPayments = attendanceRecords.reduce((sum, record) => sum + (record.paymentAmount || 0), 0);
+              const paymentDays = attendanceRecords.filter(record => record.paymentAmount && record.paymentAmount > 0).length;
+              trackPaymentHistory(user.id, totalPayments, paymentDays);
+              setShowPaymentHistoryModal(true);
+            }}
             className="bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700 flex items-center justify-center gap-2"
           >
             <History className="w-4 h-4" />
@@ -547,7 +564,7 @@ export default function WorkerDashboard() {
                   <History className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h4 className="text-lg font-medium text-gray-600 mb-2">No Payment History</h4>
                   <p className="text-gray-500 mb-4">
-                    You haven't received any payments yet. Payments will appear here when you add them to your attendance records.
+                    You haven&apos;t received any payments yet. Payments will appear here when you add them to your attendance records.
                   </p>
                 </div>
               )}
