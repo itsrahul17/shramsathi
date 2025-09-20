@@ -1,0 +1,25 @@
+# ShramSathi Firebase Configuration Backup
+# Save this information for easy migration to new device
+
+PROJECT_ID=shramsathi-ea4b0
+PROJECT_NUMBER=145415919157
+HOSTING_URL=https://shramsathi-ea4b0.web.app
+CONSOLE_URL=https://console.firebase.google.com/project/shramsathi-ea4b0
+
+# Environment Variables for .env.local:
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyDI0gJHopRBzEPnVodSxdNuBt5aKPAEtHE
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=shramsathi-ea4b0.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=shramsathi-ea4b0
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=shramsathi-ea4b0.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=145415919157
+NEXT_PUBLIC_FIREBASE_APP_ID=1:145415919157:web:d14c3016d79748dbf4837c
+
+# GitHub Repository:
+https://github.com/itsrahul17/shramsathi.git
+
+# Quick Migration Commands:
+# 1. git clone https://github.com/itsrahul17/shramsathi.git
+# 2. cd shramsathi
+# 3. npm install
+# 4. Create .env.local with above config
+# 5. npm run dev
