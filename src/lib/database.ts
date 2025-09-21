@@ -327,6 +327,50 @@ export const authenticateUser = async (mobile: string, password: string): Promis
   }
 };
 
+// Update existing user's password (for migration from OTP to password system)
+export const updateUserPassword = async (userId: string, password: string): Promise<boolean> => {
+  try {
+    console.log('🔑 Updating password for user:', userId);
+    
+    // Test Firebase connection first
+    const connectionTest = await testFirebaseConnection();
+    
+    if (connectionTest.connected) {
+      try {
+        // Update in Firebase
+        await updateDoc(doc(db, USERS_COLLECTION, userId), {
+          password: password
+        });
+        console.log('✅ Password updated in Firebase');
+      } catch (firebaseError) {
+        console.error('❌ Firebase password update failed:', firebaseError);
+      }
+    } else {
+      console.warn('⚠️ Firebase not available, updating locally only');
+    }
+    
+    // Always update in localStorage
+    const localUser = getTempData(`user_${userId}`);
+    if (localUser) {
+      localUser.password = password;
+      setTempData(`user_${userId}`, localUser);
+      console.log('💾 Password updated in localStorage');
+    }
+    
+    // Also update the mobile mapping cache
+    const userWithPassword = await getUserById(userId);
+    if (userWithPassword) {
+      setTempData(`user_${userId}`, { ...userWithPassword, password });
+      setTempData(`mobile_${userWithPassword.mobile}`, userId);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error updating user password:', error);
+    return false;
+  }
+};
+
 export const getUserByMobile = async (mobile: string): Promise<User | null> => {
   try {
     // First try Firebase

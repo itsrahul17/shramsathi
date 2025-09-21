@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Phone, ArrowRight, User, Building } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserByMobile, createUser, authenticateUser } from '@/lib/database';
+import { getUserByMobile, createUser, authenticateUser, updateUserPassword } from '@/lib/database';
 import { UserRole } from '@/types';
 import { trackUserRegistration, trackUserLogin } from '@/lib/analytics';
 
@@ -20,6 +20,7 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [isPasswordMigration, setIsPasswordMigration] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,8 +46,15 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
       const existingUser = await getUserByMobile(mobile);
       if (existingUser) {
         setIsNewUser(false);
+        // Check if existing user has password (migration needed)
+        if (!existingUser.password) {
+          setIsPasswordMigration(true);
+        } else {
+          setIsPasswordMigration(false);
+        }
       } else {
         setIsNewUser(true);
+        setIsPasswordMigration(false);
       }
       setStep('password');
     } catch {
@@ -65,16 +73,54 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
       return;
     }
 
-    if (isNewUser) {
-      // For new users, check password confirmation
+    if (isNewUser || isPasswordMigration) {
+      // For new users or existing users setting password, check password confirmation
       if (password !== confirmPassword) {
         setError('Passwords do not match');
         return;
       }
-      setStep('role');
+      
+      if (isPasswordMigration) {
+        // Update existing user's password and login
+        await updateExistingUserPassword();
+      } else {
+        // New user - continue to role selection
+        setStep('role');
+      }
     } else {
       // Login existing user with password
       await loginExistingUserWithPassword();
+    }
+  };
+
+  const updateExistingUserPassword = async () => {
+    setLoading(true);
+    try {
+      // Get existing user data
+      const existingUser = await getUserByMobile(mobile);
+      if (!existingUser) {
+        setError('User not found');
+        return;
+      }
+
+      // Update user with password
+      const updatedUserData = {
+        ...existingUser,
+        password // Add password to existing user
+      };
+      
+      // Update in database (we'll need to add this function)
+      await updateUserPassword(existingUser.id, password);
+      
+      // Track user login
+      trackUserLogin(existingUser.role, existingUser.id);
+      setUser(updatedUserData);
+      onSuccess();
+    } catch (error) {
+      console.error('Password update error:', error);
+      setError('Failed to update password. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -204,24 +250,32 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
         {step === 'password' && (
           <form onSubmit={handlePasswordSubmit} className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-800 text-center">
-              {isNewUser ? 'Set Your Password' : 'Enter Your Password'}
+              {isPasswordMigration ? 'Set Up Your Password' : (isNewUser ? 'Set Your Password' : 'Enter Your Password')}
             </h2>
+            
+            {isPasswordMigration && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <p className="text-blue-800 text-sm text-center">
+                  🔒 For enhanced security, please set up a password for your account
+                </p>
+              </div>
+            )}
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {isNewUser ? 'Create Password (4-6 digits)' : 'Password'}
+                {(isNewUser || isPasswordMigration) ? 'Create Password (4-6 digits)' : 'Password'}
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-xl tracking-widest"
-                placeholder={isNewUser ? 'Set 4-6 digit password' : 'Enter your password'}
+                placeholder={(isNewUser || isPasswordMigration) ? 'Set 4-6 digit password' : 'Enter your password'}
                 maxLength={6}
               />
             </div>
             
-            {isNewUser && (
+            {(isNewUser || isPasswordMigration) && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm Password
@@ -241,10 +295,12 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
             
             <button
               type="submit"
-              disabled={loading || password.length < 4 || (isNewUser && confirmPassword.length < 4)}
+              disabled={loading || password.length < 4 || ((isNewUser || isPasswordMigration) && confirmPassword.length < 4)}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? (isNewUser ? 'Setting up...' : 'Signing in...') : (isNewUser ? 'Continue' : 'Sign In')}
+              {loading ? 
+                (isPasswordMigration ? 'Updating account...' : (isNewUser ? 'Setting up...' : 'Signing in...')) : 
+                (isPasswordMigration ? 'Set Password & Continue' : (isNewUser ? 'Continue' : 'Sign In'))}
             </button>
 
             <button
@@ -254,6 +310,8 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
                 setPassword('');
                 setConfirmPassword('');
                 setError('');
+                setIsPasswordMigration(false);
+                setIsNewUser(false);
               }}
               className="w-full text-gray-600 py-2 text-sm"
             >
