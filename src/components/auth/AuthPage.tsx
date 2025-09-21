@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Phone, ArrowRight, User, Building } from 'lucide-react';
+import { Phone, ArrowRight, User, Building, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserByMobile, createUser, authenticateUser, updateUserPassword } from '@/lib/database';
 import { UserRole } from '@/types';
@@ -23,6 +23,8 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
   const [isPasswordMigration, setIsPasswordMigration] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Profile form states
   const [name, setName] = useState('');
@@ -265,14 +267,23 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {(isNewUser || isPasswordMigration) ? 'Create Password (4-6 digits)' : 'Password'}
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-xl tracking-widest"
-                placeholder={(isNewUser || isPasswordMigration) ? 'Set 4-6 digit password' : 'Enter your password'}
-                maxLength={6}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-xl tracking-widest"
+                  placeholder={(isNewUser || isPasswordMigration) ? 'Set 4-6 digit password' : 'Enter your password'}
+                  maxLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
             
             {(isNewUser || isPasswordMigration) && (
@@ -280,14 +291,23 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm Password
                 </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-xl tracking-widest"
-                  placeholder="Confirm your password"
-                  maxLength={6}
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-xl tracking-widest"
+                    placeholder="Confirm your password"
+                    maxLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             )}
             
@@ -312,6 +332,8 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
                 setError('');
                 setIsPasswordMigration(false);
                 setIsNewUser(false);
+                setShowPassword(false);
+                setShowConfirmPassword(false);
               }}
               className="w-full text-gray-600 py-2 text-sm"
             >
