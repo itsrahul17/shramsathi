@@ -7,6 +7,7 @@ export interface User {
   mobile: string;
   name: string;
   role: UserRole;
+  password?: string; // 4-6 digit password for authentication
   createdAt: Date;
   // Worker specific fields
   skill?: string;

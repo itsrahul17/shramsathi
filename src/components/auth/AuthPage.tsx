@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Phone, ArrowRight, User, Building } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserByMobile, createUser } from '@/lib/database';
+import { getUserByMobile, createUser, authenticateUser } from '@/lib/database';
 import { UserRole } from '@/types';
 import { trackUserRegistration, trackUserLogin } from '@/lib/analytics';
 
@@ -11,12 +11,13 @@ interface AuthPageProps {
   onSuccess: () => void;
 }
 
-type AuthStep = 'mobile' | 'otp' | 'role' | 'profile';
+type AuthStep = 'mobile' | 'password' | 'role' | 'profile';
 
 export default function AuthPage({ onSuccess }: AuthPageProps) {
   const [step, setStep] = useState<AuthStep>('mobile');
   const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,42 +48,49 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
       } else {
         setIsNewUser(true);
       }
-      setStep('otp');
-    } catch (error) {
+      setStep('password');
+    } catch {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp !== '123456') {
-      setError('Invalid OTP. Use 123456 for demo.');
+    
+    // Validate password length (4-6 digits)
+    if (password.length < 4 || password.length > 6 || !/^\d+$/.test(password)) {
+      setError('Password must be 4-6 digits only');
       return;
     }
 
     if (isNewUser) {
+      // For new users, check password confirmation
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
       setStep('role');
     } else {
-      // Login existing user
-      loginExistingUser();
+      // Login existing user with password
+      await loginExistingUserWithPassword();
     }
   };
 
-  const loginExistingUser = async () => {
+  const loginExistingUserWithPassword = async () => {
     setLoading(true);
     try {
-      const user = await getUserByMobile(mobile);
+      const user = await authenticateUser(mobile, password);
       if (user) {
         // Track user login
         trackUserLogin(user.role, user.id);
         setUser(user);
         onSuccess();
       } else {
-        setError('User not found');
+        setError('Invalid mobile number or password');
       }
-    } catch (error) {
+    } catch {
       setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -122,6 +130,7 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
         mobile,
         name: name.trim(),
         role: selectedRole!,
+        password, // Include the password for new users
         ...(selectedRole === 'worker' && { skill: skill.trim() }),
         ...(selectedRole === 'contractor' && { companyName: companyName.trim() })
       };
@@ -185,44 +194,66 @@ export default function AuthPage({ onSuccess }: AuthPageProps) {
               disabled={loading || mobile.length !== 10}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'Sending...' : 'Send OTP'}
+              {loading ? 'Checking...' : 'Continue'}
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
         )}
 
-        {step === 'otp' && (
-          <form onSubmit={handleOtpSubmit} className="space-y-6">
+        {step === 'password' && (
+          <form onSubmit={handlePasswordSubmit} className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-800 text-center">
+              {isNewUser ? 'Set Your Password' : 'Enter Your Password'}
+            </h2>
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Enter OTP
+                {isNewUser ? 'Create Password (4-6 digits)' : 'Password'}
               </label>
               <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl tracking-widest"
-                placeholder="123456"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-xl tracking-widest"
+                placeholder={isNewUser ? 'Set 4-6 digit password' : 'Enter your password'}
                 maxLength={6}
               />
-              <p className="text-sm text-gray-500 mt-2">
-                Demo OTP: <span className="font-mono">123456</span>
-              </p>
             </div>
+            
+            {isNewUser && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-xl tracking-widest"
+                  placeholder="Confirm your password"
+                  maxLength={6}
+                />
+              </div>
+            )}
             
             {error && <p className="text-red-500 text-sm">{error}</p>}
             
             <button
               type="submit"
-              disabled={loading || otp.length !== 6}
+              disabled={loading || password.length < 4 || (isNewUser && confirmPassword.length < 4)}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Verifying...' : 'Verify OTP'}
+              {loading ? (isNewUser ? 'Setting up...' : 'Signing in...') : (isNewUser ? 'Continue' : 'Sign In')}
             </button>
 
             <button
               type="button"
-              onClick={() => setStep('mobile')}
+              onClick={() => {
+                setStep('mobile');
+                setPassword('');
+                setConfirmPassword('');
+                setError('');
+              }}
               className="w-full text-gray-600 py-2 text-sm"
             >
               Change mobile number

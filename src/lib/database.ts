@@ -305,6 +305,28 @@ const createUserLocal = (userData: Omit<User, 'id' | 'createdAt'>): string => {
   }
 };
 
+// Authentication with password
+export const authenticateUser = async (mobile: string, password: string): Promise<User | null> => {
+  try {
+    const user = await getUserByMobile(mobile);
+    if (!user) {
+      console.log('User not found for mobile:', mobile);
+      return null;
+    }
+    
+    if (user.password !== password) {
+      console.log('Invalid password for user:', mobile);
+      return null;
+    }
+    
+    console.log('User authenticated successfully:', user.name);
+    return user;
+  } catch (error) {
+    console.error('Error authenticating user:', error);
+    return null;
+  }
+};
+
 export const getUserByMobile = async (mobile: string): Promise<User | null> => {
   try {
     // First try Firebase
